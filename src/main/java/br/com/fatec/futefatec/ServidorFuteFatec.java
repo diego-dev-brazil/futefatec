@@ -40,7 +40,7 @@ public class ServidorFuteFatec {
        File baseDir = new File("/app").getCanonicalFile();
 String docBase = baseDir.getAbsolutePath();
 
-Context ctx = tomcat.addContext("/", docBase);
+Context ctx = tomcat.addContext("", docBase);
 
 Tomcat.addServlet(ctx, "default",
         "org.apache.catalina.servlets.DefaultServlet");

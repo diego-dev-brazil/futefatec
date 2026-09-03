@@ -107,19 +107,19 @@ updateAddButtonState();
    INTEGRAÇÃO COM O BACKEND JAVA (Jakarta Servlets)
    --------------------------------------------------------------------- */
 
-let detectedBackend = 'http://localhost:8085';
-
 /**
  * Detecta dinamicamente onde o backend Java está rodando.
- * Se a página foi aberta diretamente pelo Tomcat (porta 8085), usa caminhos relativos ('').
- * Se foi aberta pelo Live Server (porta 5500) ou por arquivo direto (file://), aponta para http://localhost:8085.
+ * Em qualquer servidor web (localhost:8085, túnel Cloudflare, Render, VPS), usa caminhos relativos ('').
+ * Apenas se aberto como arquivo local direto (file://) ou Live Server do VS Code (porta 5500), aponta para http://localhost:8085.
  */
-async function getBackendUrl() {
-    if (window.location.origin.includes(':8085')) {
-        return '';
+function getBackendUrl() {
+    if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || window.location.port === '5500')) {
+        return 'http://localhost:8085';
     }
-    return 'http://localhost:8085';
+    return '';
 }
+
+let detectedBackend = getBackendUrl();
 
 const teamForm = document.getElementById('teamForm');
 const statusMessage = document.getElementById('statusMessage');

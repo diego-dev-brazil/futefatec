@@ -37,8 +37,31 @@ public class ServidorFuteFatec {
         tomcat.getConnector(); // Inicializa o conector HTTP padrão
 
         // Diretório base da aplicação (onde estão index.html, script.js, style.css, uploads)
-        String docBase = new File(".").getAbsolutePath();
+        File baseDir = new File(".").getCanonicalFile();
+        if (!new File(baseDir, "index.html").exists()) {
+            File parent = baseDir.getParentFile();
+            if (parent != null && new File(parent, "index.html").exists()) {
+                baseDir = parent;
+            }
+        }
+        String docBase = baseDir.getAbsolutePath();
         Context ctx = tomcat.addContext("", docBase);
+
+        // Configura a página inicial padrão (Welcome File) para que http://localhost:8085/ abra index.html
+        ctx.addWelcomeFile("index.html");
+
+        // Configura os MIME types para que navegadores apliquem o CSS e JS corretamente
+        ctx.addMimeMapping("html", "text/html; charset=UTF-8");
+        ctx.addMimeMapping("htm", "text/html; charset=UTF-8");
+        ctx.addMimeMapping("css", "text/css; charset=UTF-8");
+        ctx.addMimeMapping("js", "application/javascript; charset=UTF-8");
+        ctx.addMimeMapping("json", "application/json; charset=UTF-8");
+        ctx.addMimeMapping("png", "image/png");
+        ctx.addMimeMapping("jpg", "image/jpeg");
+        ctx.addMimeMapping("jpeg", "image/jpeg");
+        ctx.addMimeMapping("gif", "image/gif");
+        ctx.addMimeMapping("svg", "image/svg+xml");
+        ctx.addMimeMapping("ico", "image/x-icon");
 
         // Configura o servlet padrão do Tomcat para servir arquivos estáticos (HTML, CSS, JS, uploads)
         Tomcat.addServlet(ctx, "default", "org.apache.catalina.servlets.DefaultServlet");

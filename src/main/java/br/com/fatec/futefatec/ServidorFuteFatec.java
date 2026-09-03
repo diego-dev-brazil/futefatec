@@ -37,19 +37,16 @@ public class ServidorFuteFatec {
         tomcat.setPort(porta);
         tomcat.getConnector(); // Inicializa o conector HTTP padrão
 
-        // Diretório base da aplicação (onde estão index.html, script.js, style.css, uploads)
-        File baseDir = new File(".").getCanonicalFile();
-        if (!new File(baseDir, "index.html").exists()) {
-            File parent = baseDir.getParentFile();
-            if (parent != null && new File(parent, "index.html").exists()) {
-                baseDir = parent;
-            }
-        }
-        String docBase = baseDir.getAbsolutePath();
-        Context ctx = tomcat.addContext("/", docBase);
+       File baseDir = new File("/app").getCanonicalFile();
+String docBase = baseDir.getAbsolutePath();
 
-        // Configura a página inicial padrão (Welcome File) para que http://localhost:8085/ abra index.html
-        ctx.addWelcomeFile("index.html");
+Context ctx = tomcat.addContext("/", docBase);
+
+Tomcat.addServlet(ctx, "default",
+        "org.apache.catalina.servlets.DefaultServlet");
+
+ctx.addServletMappingDecoded("/", "default");
+ctx.addWelcomeFile("index.html");
 
         // Configura os MIME types para que navegadores apliquem o CSS e JS corretamente
         ctx.addMimeMapping("html", "text/html; charset=UTF-8");

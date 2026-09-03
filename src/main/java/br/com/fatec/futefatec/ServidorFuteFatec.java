@@ -42,10 +42,7 @@ String docBase = baseDir.getAbsolutePath();
 
 Context ctx = tomcat.addContext("", docBase);
 
-Tomcat.addServlet(ctx, "default",
-        "org.apache.catalina.servlets.DefaultServlet");
 
-ctx.addServletMappingDecoded("/", "default");
 ctx.addWelcomeFile("index.html");
 
         // Configura os MIME types para que navegadores apliquem o CSS e JS corretamente

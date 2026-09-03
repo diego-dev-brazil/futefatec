@@ -113,22 +113,14 @@ updateAddButtonState();
  * Apenas se aberto como arquivo local direto (file://) ou Live Server do VS Code (porta 5500), aponta para http://localhost:8085.
  */
 function getBackendUrl() {
-    if (typeof window !== 'undefined' && (window.location.protocol === 'file:' || window.location.port === '5500')) {
-        return 'http://localhost:8085';
     }
     return '';
 }
 
-let detectedBackend = getBackendUrl();
-
-const teamForm = document.getElementById('teamForm');
 const statusMessage = document.getElementById('statusMessage');
 const submitBtn = teamForm.querySelector('.btn-submit');
-
 /**
  * Exibe mensagens visuais de status para o usuário (loading, success, error)
- */
-function showStatus(texto, tipo = 'loading') {
     if (!statusMessage) return;
     statusMessage.textContent = texto;
     statusMessage.className = `status-message ${tipo}`;

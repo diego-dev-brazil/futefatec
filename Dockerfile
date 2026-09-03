@@ -32,13 +32,10 @@ COPY style.css /app/style.css
 COPY script.js /app/script.js
 
 # Variáveis de Ambiente padrão
-ENV PORT=8085
 ENV ADMIN_PASSWORD=fatec2026
 
 # Volumes persistentes (para não perder os times nem as logos ao reiniciar o container)
 VOLUME ["/app/data", "/app/uploads"]
-
-EXPOSE 8085
 
 # Script de entrada para compor o classpath e iniciar o Tomcat Embarcado
 CMD java -cp "target/classes:/root/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.43/tomcat-embed-core-10.1.43.jar:/root/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.19.2/jackson-databind-2.19.2.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.19.2/jackson-core-2.19.2.jar:/root/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.19.2/jackson-annotations-2.19.2.jar:/root/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar" br.com.fatec.futefatec.ServidorFuteFatec

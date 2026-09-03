@@ -1,14 +1,15 @@
 package br.com.fatec.futefatec;
 
-import br.com.fatec.futefatec.dao.ConnectionFactory;
-import br.com.fatec.futefatec.servlet.ChaveamentoServlet;
-import br.com.fatec.futefatec.servlet.InscricaoServlet;
-import jakarta.servlet.MultipartConfigElement;
+import java.io.File;
+
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 
-import java.io.File;
+import br.com.fatec.futefatec.dao.ConnectionFactory;
+import br.com.fatec.futefatec.servlet.ChaveamentoServlet;
+import br.com.fatec.futefatec.servlet.InscricaoServlet;
+import jakarta.servlet.MultipartConfigElement;
 
 /**
  * Classe principal para inicializar o servidor Apache Tomcat embutido.
@@ -45,7 +46,7 @@ public class ServidorFuteFatec {
             }
         }
         String docBase = baseDir.getAbsolutePath();
-        Context ctx = tomcat.addContext("", docBase);
+        Context ctx = tomcat.addContext("/", docBase);
 
         // Configura a página inicial padrão (Welcome File) para que http://localhost:8085/ abra index.html
         ctx.addWelcomeFile("index.html");

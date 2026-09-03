@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <display-name>FuteFatec</display-name>
+
+    <!-- Mapeamento clássico do Servlet (também configurado via @WebServlet no código) -->
+    <servlet>
+        <servlet-name>InscricaoServlet</servlet-name>
+        <servlet-class>br.com.fatec.futefatec.servlet.InscricaoServlet</servlet-class>
+        
+        <!-- Configuração de Multipart no web.xml (equivalente a @MultipartConfig) -->
+        <multipart-config>
+            <max-file-size>10485760</max-file-size>       <!-- 10 MB -->
+            <max-request-size>26214400</max-request-size> <!-- 25 MB -->
+            <file-size-threshold>1048576</file-size-threshold> <!-- 1 MB -->
+        </multipart-config>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>InscricaoServlet</servlet-name>
+        <url-pattern>/inscrever</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>InscricaoServlet</servlet-name>
+        <url-pattern>/api/times</url-pattern>
+    </servlet-mapping>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+</web-app>
+

@@ -1,0 +1,11 @@
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/ServidorFuteFatec.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/dao/ConfiguracaoDAO.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/dao/ConnectionFactory.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/dao/PartidaDAO.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/dao/TimeDAO.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Jogador.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Partida.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Time.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/AdminServlet.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/ChaveamentoServlet.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/InscricaoServlet.java

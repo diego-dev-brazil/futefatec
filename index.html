@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuteFatec - Inscrição de Times</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-main">
+                <div>
+                    <h1>Fute<span>Fatec</span></h1>
+                    <p>Cadastre seu time para o torneio</p>
+                </div>
+                <!-- Controle de Acesso do Administrador -->
+                <div class="admin-auth-bar">
+                    <button type="button" id="btnOpenAdminModal" class="btn-admin-login">
+                        🔐 Área Admin
+                    </button>
+                    <div id="adminLoggedBadge" class="admin-logged-pill" style="display: none;">
+                        <span class="admin-dot"></span>
+                        <span>Admin Ativo</span>
+                        <button type="button" id="btnLogoutAdmin" class="btn-admin-logout" title="Sair do modo administrador">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Abas de Navegação -->
+        <nav class="tournament-tabs">
+            <button type="button" class="tab-btn active" data-tab="tab-inscricao">
+                ⚽ Inscrição de Times
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-chaveamento" id="tabChaveamentoBtn">
+                🏆 Chaveamento & Repescagem
+            </button>
+        </nav>
+
+        <!-- ABA 1: Formulário de Inscrição -->
+        <div id="tab-inscricao" class="tab-content active">
+            <!-- Área para mensagens visuais de status (Sucesso / Erro / Carregando) -->
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+            <form action="/inscrever" method="POST" enctype="multipart/form-data" id="teamForm">
+                <div class="form-group">
+                    <label for="teamName">Nome do Time:</label>
+                    <input type="text" id="teamName" name="Nome_do_Time" required placeholder="Ex: ADS United">
+                </div>
+
+                <div class="form-group">
+                    <label for="captainName">Nome do Capitão:</label>
+                    <input type="text" id="captainName" name="Capitao" required placeholder="Digite o nome do capitão">
+                </div>
+
+                <div class="form-group">
+                    <label for="teamLogo">Logo do Time:</label>
+                    <input type="file" id="teamLogo" name="Logo_do_Time" accept="image/*">
+                </div>
+
+                <input type="hidden" id="playerCount" name="Quantidade_Jogadores" value="5">
+
+                <div class="field-container">
+                    <h3>Escalação no Campo</h3>
+                    <p class="instrucao">Time base de futsal (5 titulares).</p>
+                    <div id="soccerField" class="soccer-field"></div>
+                </div>
+
+                <div class="reserves-container">
+                    <h3>Reservas</h3>
+                    <p class="instrucao">Adicione até <strong>3 reservas</strong> (máximo de 8 jogadores no total).</p>
+                    <div id="reservesList" class="reserves-list"></div>
+                    <button type="button" id="addReserveBtn" class="btn-add-reserve">
+                        + Adicionar Reserva
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-submit">Enviar Inscrição</button>
+            </form>
+
+            <!-- Painel Administrativo de Gestão do Banco (Visível apenas para o Admin) -->
+            <div id="adminRegisteredTeamsSection" class="registered-teams-section" style="display: none;">
+                <div class="registered-teams-header">
+                    <h3>🛠️ Gerenciamento do Banco de Dados (<span id="registeredTeamsCount">0</span> times)</h3>
+                    <button type="button" id="btnRecarregarTimes" class="btn-refresh-teams">🔄 Atualizar</button>
+                </div>
+                <p class="instrucao">Acesso restrito ao administrador: altere dados cadastrais ou exclua equipes do torneio.</p>
+                <div id="registeredTeamsList" class="registered-teams-list">
+                    <p style="text-align: center; color: #64748b;">Carregando equipes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 2: Sistema de Chaveamento com Repescagem -->
+        <div id="tab-chaveamento" class="tab-content">
+            <!-- Mensagem Oficial de Bloqueio (Visível para o público antes da liberação) -->
+            <div id="bracketLockedMessage" class="bracket-locked-card" style="display: none;">
+                <div class="locked-icon">🔒</div>
+                <h2>Chaveamento em Espera</h2>
+                <p class="locked-text">O chaveamento será liberado quando todas as equipes estiverem cadastradas.</p>
+                <p class="locked-subtext">A comissão organizadora está finalizando o sorteio dos confrontos. Fique ligado!</p>
+            </div>
+
+            <!-- Toolbar e Chaves (Visível para o Admin OU para o público quando liberado) -->
+            <div id="bracketActiveWrapper" style="display: none;">
+                <div class="bracket-toolbar">
+                    <div class="bracket-info">
+                        <span id="teamsCountBadge" class="badge-count">0 equipes inscritas</span>
+                        <p class="bracket-subtitle">Sistema adaptativo com Chave Principal e Repescagem (Double Elimination)</p>
+                    </div>
+                    <!-- Ações Exclusivas do Administrador -->
+                    <div id="adminBracketActions" class="bracket-actions" style="display: none;">
+                        <button type="button" id="btnToggleChaveamento" class="btn-bracket-action btn-toggle-release">
+                            🔓 Liberar para o Público
+                        </button>
+                        <button type="button" id="btnGerarChave" class="btn-bracket-action btn-generate">
+                            🎲 Sortear / Gerar Chaveamento
+                        </button>
+                        <button type="button" id="btnResetChave" class="btn-bracket-action btn-reset">
+                            🗑️ Resetar Chave
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feedback de ações do chaveamento -->
+                <div id="bracketStatus" class="status-message" style="display: none;"></div>
+
+                <!-- Container Principal do Chaveamento -->
+                <div id="bracketContainer" class="bracket-container">
+                    <div class="empty-bracket-state">
+                        <p>Carregando chaveamento...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Síntese do Time (Estatísticas, Gols e Jogadores) -->
+    <div id="teamModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <button type="button" class="modal-close" id="modalCloseBtn" aria-label="Fechar">&times;</button>
+            <div id="modalContent">
+                <!-- Preenchido dinamicamente ao clicar no time -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Login do Administrador -->
+    <div id="adminLoginModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card modal-card-sm">
+            <button type="button" class="modal-close" id="closeAdminLoginBtn" aria-label="Fechar">&times;</button>
+            <div class="admin-login-header">
+                <h2>🔐 Área do Administrador</h2>
+                <p>Entre com suas credenciais de organizador para gerenciar o torneio e o banco de dados.</p>
+            </div>
+            <div id="adminLoginStatus" class="status-message" style="display: none;"></div>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUser">Usuário:</label>
+                    <input type="text" id="adminUser" required placeholder="admin" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Senha:</label>
+                    <input type="password" id="adminPassword" required placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-submit" style="margin-top: 16px;">Entrar como Administrador</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

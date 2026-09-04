@@ -606,7 +606,7 @@ async function abrirSinteseTime(timeId) {
                     <img src="${logoSrc}" alt="Logo" class="modal-logo-lg" onerror="this.src='https://placehold.co/100x100/e2e8f0/64748b?text=LOGO'">
                     <div class="modal-header-info">
                         <h2>${time.nome}</h2>
-                        <p><strong>Capitão:</strong> ${time.capitao}</p>
+                        <p><strong>Capitão:</strong> ${time.capitao}${time.email ? ` <span style="color:#64748b; font-size:0.85em;">(${time.email})</span>` : ''}</p>
                         <p><small>Inscrito em: ${time.dataHoraInscricao || 'Recentemente'}</small></p>
                     </div>
                 </div>
@@ -750,7 +750,7 @@ async function carregarListaTimesCadastrados() {
                         <img src="${logoSrc}" alt="Logo" class="team-logo-thumb" onerror="this.src='https://placehold.co/50x50/e2e8f0/64748b?text=FT'">
                         <div class="registered-team-details">
                             <h4>${time.nome}</h4>
-                            <p>Capitão: <strong>${time.capitao}</strong> | ${time.jogadores ? time.jogadores.length : 0} jogadores</p>
+                            <p>Capitão: <strong>${time.capitao}</strong>${time.email ? ` <span style="color:#64748b; font-size:0.85em;">(${time.email})</span>` : ''} | ${time.jogadores ? time.jogadores.length : 0} jogadores</p>
                         </div>
                     </div>
                     <div class="registered-team-actions">

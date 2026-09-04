@@ -55,6 +55,7 @@ public class ConnectionFactory {
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(100) NOT NULL,
                 capitao VARCHAR(100) NOT NULL,
+                email VARCHAR(150),
                 logo_arquivo VARCHAR(255),
                 qtd_jogadores INT NOT NULL,
                 data_inscricao VARCHAR(30) NOT NULL
@@ -105,6 +106,13 @@ public class ConnectionFactory {
             stmt.execute(sqlJogadores);
             stmt.execute(sqlPartidas);
             stmt.execute(sqlConfiguracoes);
+
+            // Migração segura para bancos existentes: adiciona coluna email se não existir
+            try {
+                stmt.execute("ALTER TABLE times ADD COLUMN IF NOT EXISTS email VARCHAR(150)");
+            } catch (SQLException ignored) {
+                // Coluna já existe ou não suportado
+            }
 
             // Insere configuração inicial de chaveamento liberado = false caso ainda não exista
             stmt.execute("""

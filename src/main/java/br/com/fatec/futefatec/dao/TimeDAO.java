@@ -1,11 +1,15 @@
 package br.com.fatec.futefatec.dao;
 
-import br.com.fatec.futefatec.model.Jogador;
-import br.com.fatec.futefatec.model.Time;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import br.com.fatec.futefatec.model.Jogador;
+import br.com.fatec.futefatec.model.Time;
 
 /**
  * ============================================================================
@@ -27,8 +31,8 @@ public class TimeDAO {
      */
     public void salvar(Time time) throws SQLException {
         String sqlTime = """
-            INSERT INTO times (nome, capitao, logo_arquivo, qtd_jogadores, data_inscricao)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO times (nome, capitao, email, logo_arquivo, qtd_jogadores, data_inscricao)
+            VALUES (?, ?, ?, ?, ?, ?)
         """;
 
         String sqlJogador = """
@@ -50,9 +54,10 @@ public class TimeDAO {
             stmtTime = conn.prepareStatement(sqlTime, Statement.RETURN_GENERATED_KEYS);
             stmtTime.setString(1, time.getNome());
             stmtTime.setString(2, time.getCapitao());
-            stmtTime.setString(3, time.getNomeArquivoLogo());
-            stmtTime.setInt(4, time.getQuantidadeJogadores());
-            stmtTime.setString(5, time.getDataHoraInscricao());
+            stmtTime.setString(3, time.getEmail());
+            stmtTime.setString(4, time.getNomeArquivoLogo());
+            stmtTime.setInt(5, time.getQuantidadeJogadores());
+            stmtTime.setString(6, time.getDataHoraInscricao());
             stmtTime.executeUpdate();
 
             // 3. Recupera o ID gerado pelo banco para este time
@@ -113,7 +118,7 @@ public class TimeDAO {
      */
     public List<Time> listarTodos() throws SQLException {
         List<Time> times = new ArrayList<>();
-        String sql = "SELECT id, nome, capitao, logo_arquivo, qtd_jogadores, data_inscricao FROM times ORDER BY id ASC";
+        String sql = "SELECT id, nome, capitao, email, logo_arquivo, qtd_jogadores, data_inscricao FROM times ORDER BY id ASC";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -124,6 +129,7 @@ public class TimeDAO {
                         rs.getLong("id"),
                         rs.getString("nome"),
                         rs.getString("capitao"),
+                        rs.getString("email"),
                         rs.getString("logo_arquivo"),
                         rs.getInt("qtd_jogadores"),
                         rs.getString("data_inscricao")
@@ -141,7 +147,7 @@ public class TimeDAO {
      * Busca um time por ID com seus jogadores.
      */
     public Time buscarPorId(Long id) throws SQLException {
-        String sql = "SELECT id, nome, capitao, logo_arquivo, qtd_jogadores, data_inscricao FROM times WHERE id = ?";
+        String sql = "SELECT id, nome, capitao, email, logo_arquivo, qtd_jogadores, data_inscricao FROM times WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -153,6 +159,7 @@ public class TimeDAO {
                             rs.getLong("id"),
                             rs.getString("nome"),
                             rs.getString("capitao"),
+                            rs.getString("email"),
                             rs.getString("logo_arquivo"),
                             rs.getInt("qtd_jogadores"),
                             rs.getString("data_inscricao")

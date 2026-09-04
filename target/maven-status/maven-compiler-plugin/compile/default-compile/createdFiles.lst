@@ -1,7 +1,8 @@
-br/com/fatec/futefatec/dao/ConnectionFactory.class
 br/com/fatec/futefatec/dao/ConfiguracaoDAO.class
 br/com/fatec/futefatec/servlet/AdminServlet.class
-br/com/fatec/futefatec/dao/PartidaDAO.class
 br/com/fatec/futefatec/servlet/ChaveamentoServlet.class
+br/com/fatec/futefatec/service/EmailService.class
 br/com/fatec/futefatec/dao/TimeDAO.class
+br/com/fatec/futefatec/dao/ConnectionFactory.class
+br/com/fatec/futefatec/dao/PartidaDAO.class
 br/com/fatec/futefatec/model/Partida.class

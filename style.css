@@ -133,6 +133,8 @@ label {
 }
 
 input[type="text"],
+input[type="email"],
+input[type="password"],
 select,
 input[type="file"] {
     width: 100%;
@@ -145,6 +147,14 @@ input[type="file"] {
     font-family: var(--font-body);
     font-size: 1rem;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.form-help {
+    display: block;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 4px;
+    line-height: 1.35;
 }
 
 input[type="file"] {

@@ -1,17 +1,5 @@
 package br.com.fatec.futefatec.servlet;
 
-import br.com.fatec.futefatec.dao.TimeDAO;
-import br.com.fatec.futefatec.model.Jogador;
-import br.com.fatec.futefatec.model.Time;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.Part;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,6 +8,20 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.fatec.futefatec.dao.TimeDAO;
+import br.com.fatec.futefatec.model.Jogador;
+import br.com.fatec.futefatec.model.Time;
+import br.com.fatec.futefatec.service.EmailService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 
 /**
  * ============================================================================
@@ -134,6 +136,7 @@ public class InscricaoServlet extends HttpServlet {
         try {
             String nomeTime = req.getParameter("Nome_do_Time");
             String capitao = req.getParameter("Capitao");
+            String email = req.getParameter("Email");
             String qtdJogadoresStr = req.getParameter("Quantidade_Jogadores");
 
             if (nomeTime == null || nomeTime.trim().isEmpty() ||
@@ -166,7 +169,7 @@ public class InscricaoServlet extends HttpServlet {
                 System.err.println(">> [Aviso] Upload de logo não realizado ou padrão: " + e.getMessage());
             }
 
-            Time time = new Time(nomeTime.trim(), capitao.trim(), nomeArquivoSalvo, quantidadeJogadores);
+            Time time = new Time(nomeTime.trim(), capitao.trim(), email != null ? email.trim() : null, nomeArquivoSalvo, quantidadeJogadores);
 
             // Titulares
             processarTitular(req, time, "Jogador_Goleiro", "Goleiro");
@@ -188,9 +191,12 @@ public class InscricaoServlet extends HttpServlet {
             int totalTimes = timeDAO.listarTodos().size();
             System.out.println(">> [Banco de Dados] Time persistido com sucesso! ID: " + time.getId());
 
+            // Envia e-mail de confirmação assincronamente (se e-mail estiver informado)
+            EmailService.enviarConfirmacaoInscricao(time);
+
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resposta.put("status", "sucesso");
-            resposta.put("mensagem", "Inscrição realizada com sucesso no FutFatec!");
+            resposta.put("mensagem", "Inscrição realizada com sucesso no FUTFATEC!");
             resposta.put("time", time);
             resposta.put("totalTimesInscritos", totalTimes);
 
@@ -235,7 +241,14 @@ public class InscricaoServlet extends HttpServlet {
 
         try {
             long id = Long.parseLong(idParam.trim());
+            Time timeParaDeletar = timeDAO.buscarPorId(id);
+
             timeDAO.deletar(id);
+
+            // Notifica capitão por e-mail caso possua e-mail cadastrado
+            if (timeParaDeletar != null && timeParaDeletar.getEmail() != null && !timeParaDeletar.getEmail().isBlank()) {
+                EmailService.enviarNotificacaoExclusao(timeParaDeletar.getNome(), timeParaDeletar.getCapitao(), timeParaDeletar.getEmail());
+            }
 
             resp.setStatus(HttpServletResponse.SC_OK);
             Map<String, Object> resposta = new HashMap<>();

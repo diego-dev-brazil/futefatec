@@ -6,6 +6,8 @@
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Jogador.java
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Partida.java
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/model/Time.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/service/EmailService.java
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/AdminServlet.java
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/ChaveamentoServlet.java
 /home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/InscricaoServlet.java
+/home/diegodevkoga/Downloads/files/src/main/java/br/com/fatec/futefatec/servlet/NoCacheFilter.java

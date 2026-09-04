@@ -39,20 +39,24 @@ public class ServidorFuteFatec {
 
         // Detecta dinamicamente onde estão index.html, style.css e script.js
         // (funciona tanto localmente na sua máquina quanto no ambiente Docker / Render)
-        File baseDir = new File(".").getAbsoluteFile();
+        File baseDir = new File(".").getCanonicalFile();
         if (!new File(baseDir, "index.html").exists()) {
             File dirApp = new File("/app");
             if (dirApp.exists() && new File(dirApp, "index.html").exists()) {
-                baseDir = dirApp;
+                baseDir = dirApp.getCanonicalFile();
             } else {
                 File parent = baseDir.getParentFile();
                 if (parent != null && new File(parent, "index.html").exists()) {
-                    baseDir = parent;
+                    baseDir = parent.getCanonicalFile();
                 }
             }
         }
         String docBase = baseDir.getAbsolutePath();
         System.out.println(">> [ServidorFuteFatec] Diretório base dos arquivos estáticos: " + docBase);
+        System.out.println(">> [ServidorFuteFatec] Verificação de arquivos estáticos:");
+        System.out.println("   - index.html: " + (new File(baseDir, "index.html").exists() ? "OK" : "NÃO ENCONTRADO"));
+        System.out.println("   - style.css:  " + (new File(baseDir, "style.css").exists() ? "OK" : "NÃO ENCONTRADO"));
+        System.out.println("   - script.js:  " + (new File(baseDir, "script.js").exists() ? "OK" : "NÃO ENCONTRADO"));
 
         Context ctx = tomcat.addContext("", docBase);
 

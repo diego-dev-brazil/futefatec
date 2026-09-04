@@ -318,10 +318,13 @@ async function carregarChaveamento() {
         }
     } catch (err) {
         console.error('Erro ao carregar chaveamento:', err);
+        if (bracketLockedMessage) bracketLockedMessage.style.display = 'none';
+        if (bracketActiveWrapper) bracketActiveWrapper.style.display = 'block';
         if (bracketContainer) {
             bracketContainer.innerHTML = `
                 <div class="empty-bracket-state">
-                    <p>⚠️ Não foi possível conectar ao servidor Java (localhost:8085).</p>
+                    <p>⚠️ Não foi possível carregar as informações do chaveamento no momento.</p>
+                    <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">Aguarde alguns instantes ou atualize a página.</p>
                 </div>
             `;
         }
@@ -527,48 +530,52 @@ async function confirmarPlacar(partidaId) {
 /**
  * Botão Gerar Chaveamento
  */
-btnGerarChave.addEventListener('click', async () => {
-    if (!confirm('Deseja sortear e gerar o chaveamento para todas as equipes inscritas?')) return;
+if (btnGerarChave) {
+    btnGerarChave.addEventListener('click', async () => {
+        if (!confirm('Deseja sortear e gerar o chaveamento para todas as equipes inscritas?')) return;
 
-    showBracketStatus('🎲 Sorteando equipes e gerando chaveamento adaptativo...', 'loading');
+        showBracketStatus('🎲 Sorteando equipes e gerando chaveamento adaptativo...', 'loading');
 
-    try {
-        const base = await getBackendUrl();
-        const res = await fetch(base + '/api/chaveamento/gerar', { method: 'POST' });
-        const data = await res.json();
+        try {
+            const base = await getBackendUrl();
+            const res = await fetch(base + '/api/chaveamento/gerar', { method: 'POST' });
+            const data = await res.json();
 
-        if (res.ok && data.status === 'sucesso') {
-            showBracketStatus(`✅ ${data.mensagem}`, 'success');
-            renderizarChaves(data.partidas);
-            setTimeout(hideBracketStatus, 4000);
-        } else {
-            showBracketStatus(`❌ ${data.mensagem}`, 'error');
+            if (res.ok && data.status === 'sucesso') {
+                showBracketStatus(`✅ ${data.mensagem}`, 'success');
+                renderizarChaves(data.partidas);
+                setTimeout(hideBracketStatus, 4000);
+            } else {
+                showBracketStatus(`❌ ${data.mensagem}`, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showBracketStatus('❌ Erro ao solicitar sorteio no servidor.', 'error');
         }
-    } catch (err) {
-        console.error(err);
-        showBracketStatus('❌ Erro ao solicitar sorteio no servidor.', 'error');
-    }
-});
+    });
+}
 
 /**
  * Botão Resetar Chaveamento
  */
-btnResetChave.addEventListener('click', async () => {
-    if (!confirm('Atenção: deseja realmente zerar todo o chaveamento e placares atuais?')) return;
+if (btnResetChave) {
+    btnResetChave.addEventListener('click', async () => {
+        if (!confirm('Atenção: deseja realmente zerar todo o chaveamento e placares atuais?')) return;
 
-    try {
-        const base = await getBackendUrl();
-        const res = await fetch(base + '/api/chaveamento/reset', { method: 'POST' });
-        const data = await res.json();
-        if (res.ok) {
-            showBracketStatus('Chaveamento resetado.', 'success');
-            carregarChaveamento();
-            setTimeout(hideBracketStatus, 3000);
+        try {
+            const base = await getBackendUrl();
+            const res = await fetch(base + '/api/chaveamento/reset', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                showBracketStatus('Chaveamento resetado.', 'success');
+                carregarChaveamento();
+                setTimeout(hideBracketStatus, 3000);
+            }
+        } catch (err) {
+            console.error(err);
         }
-    } catch (err) {
-        console.error(err);
-    }
-});
+    });
+}
 
 /* ---------------------------------------------------------------------
    MODAL DE SÍNTESE DO TIME (DETALHES, GOLS E JOGADORES)
@@ -677,16 +684,20 @@ async function abrirSinteseTime(timeId) {
 }
 
 function fecharModal() {
-    teamModal.style.display = 'none';
-    modalContent.innerHTML = '';
+    if (teamModal) teamModal.style.display = 'none';
+    if (modalContent) modalContent.innerHTML = '';
 }
 
-modalCloseBtn.addEventListener('click', fecharModal);
-teamModal.addEventListener('click', (e) => {
-    if (e.target === teamModal) fecharModal();
-});
+if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', fecharModal);
+}
+if (teamModal) {
+    teamModal.addEventListener('click', (e) => {
+        if (e.target === teamModal) fecharModal();
+    });
+}
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && teamModal.style.display === 'flex') fecharModal();
+    if (e.key === 'Escape' && teamModal && teamModal.style.display === 'flex') fecharModal();
 });
 
 /* ---------------------------------------------------------------------

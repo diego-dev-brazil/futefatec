@@ -1,0 +1,12 @@
+.git
+.gitignore
+cloudflared
+data/*.db
+data/*.trace.db
+uploads/*
+!uploads/.gitkeep
+target
+*.log
+*.tmp
+Test*.java
+Test*.class

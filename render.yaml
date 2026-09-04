@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: futfatec
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: "8085"
+      - key: ADMIN_PASSWORD
+        value: "fatec2026"

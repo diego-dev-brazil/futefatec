@@ -17,6 +17,7 @@ const formacaoTitular = [
 let reservesCount = 0;
 
 function renderTitulares() {
+    if (!soccerField) return;
     soccerField.innerHTML = '';
 
     formacaoTitular.forEach(pos => {
@@ -35,10 +36,13 @@ function renderTitulares() {
 }
 
 function updatePlayerCount() {
-    playerCountInput.value = TITULARES + reservesCount;
+    if (playerCountInput) {
+        playerCountInput.value = TITULARES + reservesCount;
+    }
 }
 
 function updateAddButtonState() {
+    if (!addReserveBtn) return;
     if (reservesCount >= MAX_RESERVES) {
         addReserveBtn.disabled = true;
         addReserveBtn.textContent = 'Limite de reservas atingido';
@@ -49,7 +53,7 @@ function updateAddButtonState() {
 }
 
 function addReserve() {
-    if (reservesCount >= MAX_RESERVES) return;
+    if (!reservesList || reservesCount >= MAX_RESERVES) return;
 
     reservesCount++;
     const reserveIndex = reservesCount;
@@ -66,13 +70,16 @@ function addReserve() {
         <button type="button" class="btn-remove-reserve" aria-label="Remover reserva ${reserveIndex}">&times;</button>
     `;
 
-    reserveItem.querySelector('.btn-remove-reserve').addEventListener('click', () => {
-        reserveItem.remove();
-        reservesCount--;
-        renumberReserves();
-        updatePlayerCount();
-        updateAddButtonState();
-    });
+    const btnRemove = reserveItem.querySelector('.btn-remove-reserve');
+    if (btnRemove) {
+        btnRemove.addEventListener('click', () => {
+            reserveItem.remove();
+            reservesCount--;
+            renumberReserves();
+            updatePlayerCount();
+            updateAddButtonState();
+        });
+    }
 
     reservesList.appendChild(reserveItem);
     updatePlayerCount();
@@ -80,6 +87,7 @@ function addReserve() {
 }
 
 function renumberReserves() {
+    if (!reservesList) return;
     const items = reservesList.querySelectorAll('.reserve-item');
     items.forEach((item, idx) => {
         const num = idx + 1;
@@ -89,15 +97,23 @@ function renumberReserves() {
         const input = item.querySelector('input');
         const removeBtn = item.querySelector('.btn-remove-reserve');
 
-        label.setAttribute('for', `reserva${num}`);
-        label.textContent = `Reserva ${num}:`;
-        input.id = `reserva${num}`;
-        input.name = `Jogador_Reserva_${num}`;
-        removeBtn.setAttribute('aria-label', `Remover reserva ${num}`);
+        if (label) {
+            label.setAttribute('for', `reserva${num}`);
+            label.textContent = `Reserva ${num}:`;
+        }
+        if (input) {
+            input.id = `reserva${num}`;
+            input.name = `Jogador_Reserva_${num}`;
+        }
+        if (removeBtn) {
+            removeBtn.setAttribute('aria-label', `Remover reserva ${num}`);
+        }
     });
 }
 
-addReserveBtn.addEventListener('click', addReserve);
+if (addReserveBtn) {
+    addReserveBtn.addEventListener('click', addReserve);
+}
 
 renderTitulares();
 updatePlayerCount();
@@ -109,18 +125,29 @@ updateAddButtonState();
 
 /**
  * Detecta dinamicamente onde o backend Java está rodando.
- * Em qualquer servidor web (localhost:8085, túnel Cloudflare, Render, VPS), usa caminhos relativos ('').
- * Apenas se aberto como arquivo local direto (file://) ou Live Server do VS Code (porta 5500), aponta para http://localhost:8085.
+ * Se aberto via Tomcat (porta 8085) ou na nuvem (Render, VPS, túnel), usa caminhos relativos ('').
+ * Se aberto via Live Server do VS Code (porta 5500, 5501, etc.) ou arquivo direto (file://), aponta para http://localhost:8085.
  */
 function getBackendUrl() {
+    if (typeof window !== 'undefined') {
+        if (window.location.protocol === 'file:') return 'http://localhost:8085';
+        if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8085') {
+            return 'http://localhost:8085';
+        }
     }
     return '';
 }
 
+let detectedBackend = getBackendUrl();
+
+const teamForm = document.getElementById('teamForm');
 const statusMessage = document.getElementById('statusMessage');
-const submitBtn = teamForm.querySelector('.btn-submit');
+const submitBtn = teamForm ? teamForm.querySelector('.btn-submit') : null;
+
 /**
  * Exibe mensagens visuais de status para o usuário (loading, success, error)
+ */
+function showStatus(texto, tipo = 'loading') {
     if (!statusMessage) return;
     statusMessage.textContent = texto;
     statusMessage.className = `status-message ${tipo}`;
@@ -136,7 +163,8 @@ function hideStatus() {
 /**
  * Intercepta a submissão do formulário para envio via API fetch()
  */
-teamForm.addEventListener('submit', async function(event) {
+if (teamForm) {
+    teamForm.addEventListener('submit', async function(event) {
     event.preventDefault(); // Impede o recarregamento clássico da página
 
     // Coleta todos os campos e arquivos do formulário automaticamente como multipart/form-data
@@ -177,12 +205,15 @@ teamForm.addEventListener('submit', async function(event) {
 
     } catch (error) {
         console.error('Erro na requisição para o servidor Java:', error);
-        showStatus('❌ Não foi possível se comunicar com o backend Java (http://localhost:8080/inscrever). Verifique se o servidor está rodando!', 'error');
+        showStatus('❌ Não foi possível se comunicar com o backend Java. Verifique se o servidor está rodando!', 'error');
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = textoOriginalBtn;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = textoOriginalBtn;
+        }
     }
-});
+    });
+}
 
 /* ---------------------------------------------------------------------
    GERENCIADOR DE ABAS (INSCRIÇÃO X CHAVEAMENTO)
@@ -613,19 +644,29 @@ async function abrirSinteseTime(timeId) {
                         <p style="color: #64748b; font-size: 0.9rem;">Nenhum jogador registrado para este time.</p>
                     ` : ''}
                 </div>
-
-                ${isAdminState ? `
-                <!-- Ações de Gerenciamento do Time (Exclusivo Admin) -->
-                <div class="modal-team-actions">
-                    <button type="button" class="btn-team-action btn-team-edit" onclick="editarTime(${time.id}, '${time.nome.replace(/'/g, "\\'")}', '${time.capitao.replace(/'/g, "\\'")}')">
-                        ✏️ Alterar Nome / Capitão
-                    </button>
-                    <button type="button" class="btn-team-action btn-team-delete" onclick="deletarTime(${time.id}, '${time.nome.replace(/'/g, "\\'")}')">
-                        🗑️ Excluir Time do Torneio
-                    </button>
-                </div>
-                ` : ''}
             `;
+
+            // Ações de Gerenciamento do Time (Exclusivo Admin)
+            if (isAdminState) {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'modal-team-actions';
+
+                const btnEdit = document.createElement('button');
+                btnEdit.type = 'button';
+                btnEdit.className = 'btn-team-action btn-team-edit';
+                btnEdit.textContent = '✏️ Alterar Nome / Capitão';
+                btnEdit.onclick = () => editarTime(time.id, time.nome, time.capitao);
+
+                const btnDel = document.createElement('button');
+                btnDel.type = 'button';
+                btnDel.className = 'btn-team-action btn-team-delete';
+                btnDel.textContent = '🗑️ Excluir Time do Torneio';
+                btnDel.onclick = () => deletarTime(time.id, time.nome);
+
+                actionsDiv.appendChild(btnEdit);
+                actionsDiv.appendChild(btnDel);
+                modalContent.appendChild(actionsDiv);
+            }
         } else {
             modalContent.innerHTML = `<p style="color: #dc2626;">Falha ao carregar dados do time: ${data.mensagem}</p>`;
         }

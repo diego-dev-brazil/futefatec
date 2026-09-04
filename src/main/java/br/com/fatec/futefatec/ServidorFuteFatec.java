@@ -37,13 +37,26 @@ public class ServidorFuteFatec {
         tomcat.setPort(porta);
         tomcat.getConnector(); // Inicializa o conector HTTP padrão
 
-       File baseDir = new File("/app").getCanonicalFile();
-String docBase = baseDir.getAbsolutePath();
+        // Detecta dinamicamente onde estão index.html, style.css e script.js
+        // (funciona tanto localmente na sua máquina quanto no ambiente Docker / Render)
+        File baseDir = new File(".").getAbsoluteFile();
+        if (!new File(baseDir, "index.html").exists()) {
+            File dirApp = new File("/app");
+            if (dirApp.exists() && new File(dirApp, "index.html").exists()) {
+                baseDir = dirApp;
+            } else {
+                File parent = baseDir.getParentFile();
+                if (parent != null && new File(parent, "index.html").exists()) {
+                    baseDir = parent;
+                }
+            }
+        }
+        String docBase = baseDir.getAbsolutePath();
+        System.out.println(">> [ServidorFuteFatec] Diretório base dos arquivos estáticos: " + docBase);
 
-Context ctx = tomcat.addContext("", docBase);
+        Context ctx = tomcat.addContext("", docBase);
 
-
-ctx.addWelcomeFile("index.html");
+        ctx.addWelcomeFile("index.html");
 
         // Configura os MIME types para que navegadores apliquem o CSS e JS corretamente
         ctx.addMimeMapping("html", "text/html; charset=UTF-8");

@@ -1194,6 +1194,36 @@ input:required:invalid {
     align-items: center;
 }
 
+/* Rodapé discreto */
+.app-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.btn-admin-discreet {
+    background: transparent;
+    border: none;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    opacity: 0.35;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: opacity 0.25s ease, transform 0.2s ease;
+    line-height: 1;
+}
+
+.btn-admin-discreet:hover {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
 .btn-admin-login {
     background: #1e293b;
     color: #ffffff;

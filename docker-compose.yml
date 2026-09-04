@@ -7,7 +7,8 @@ services:
       - "8085:8085"
     environment:
       - PORT=8085
-      - ADMIN_PASSWORD=fatec2026 # Altere para a senha segura desejada na produção
+      - ADMIN_USER=adminfatec
+      - ADMIN_PASSWORD=adminfatec2026 # Altere para a senha segura desejada na produção
     volumes:
       - futefatec_data:/app/data
       - futefatec_uploads:/app/uploads

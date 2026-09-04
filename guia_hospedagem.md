@@ -12,9 +12,9 @@ Este guia explica como disponibilizar o **FutFatec** para acesso público na int
      > *"🔒 O chaveamento será liberado quando todas as equipes estiverem cadastradas."*
    - Quando liberado, o público visualiza todas as partidas e o modal de síntese de cada equipe em modo **somente leitura** (não podem alterar placares nem excluir times).
 2. **Administrador do Torneio**:
-   - Acesso exclusivo pelo botão **`🔐 Área Admin`** no cabeçalho.
-   - Usuário padrão: `admin`
-   - Senha padrão: `fatec2026` (alterável via variável de ambiente `ADMIN_PASSWORD`).
+   - Acesso discreto pelo ícone de cadeado **`🔒`** no rodapé da página.
+   - Usuário padrão: `adminfatec` (alterável via `ADMIN_USER`).
+   - Senha padrão: `adminfatec2026` (alterável via `ADMIN_PASSWORD`).
    - Recursos exclusivos:
      - Botão para **Liberar / Bloquear** a visualização do chaveamento com 1 clique.
      - Sortear/gerar chaveamento e registrar placares.

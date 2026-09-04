@@ -869,7 +869,7 @@ async function verificarStatusAdmin() {
 
 function atualizarInterfaceAdmin() {
     if (btnOpenAdminModal) {
-        btnOpenAdminModal.style.display = isAdminState ? 'none' : 'block';
+        btnOpenAdminModal.style.display = isAdminState ? 'none' : 'inline-block';
     }
     if (adminLoggedBadge) {
         adminLoggedBadge.style.display = isAdminState ? 'flex' : 'none';

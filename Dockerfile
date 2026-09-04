@@ -36,7 +36,8 @@ EXPOSE 8085 10000
 
 # Variáveis de Ambiente padrão
 ENV PORT=8085
-ENV ADMIN_PASSWORD=fatec2026
+ENV ADMIN_USER=adminfatec
+ENV ADMIN_PASSWORD=adminfatec2026
 
 # Volumes persistentes (para não perder os times nem as logos ao reiniciar o container)
 VOLUME ["/app/data", "/app/uploads"]

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
     <div class="container">
@@ -17,11 +17,8 @@
                     <h1>Fut<span>Fatec</span></h1>
                     <p>Cadastre seu time para o torneio</p>
                 </div>
-                <!-- Controle de Acesso do Administrador -->
+                <!-- Controle de Acesso do Administrador (ativo quando logado) -->
                 <div class="admin-auth-bar">
-                    <button type="button" id="btnOpenAdminModal" class="btn-admin-login">
-                        🔐 Área Admin
-                    </button>
                     <div id="adminLoggedBadge" class="admin-logged-pill" style="display: none;">
                         <span class="admin-dot"></span>
                         <span>Admin Ativo</span>
@@ -137,6 +134,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Rodapé discreto com acesso de organizador -->
+        <footer class="app-footer">
+            <span>Torneio FutFatec © 2026</span>
+            <button type="button" id="btnOpenAdminModal" class="btn-admin-discreet" title="Acesso do organizador" aria-label="Acesso administrativo">
+                🔒
+            </button>
+        </footer>
     </div>
 
     <!-- Modal de Síntese do Time (Estatísticas, Gols e Jogadores) -->
@@ -154,24 +159,24 @@
         <div class="modal-card modal-card-sm">
             <button type="button" class="modal-close" id="closeAdminLoginBtn" aria-label="Fechar">&times;</button>
             <div class="admin-login-header">
-                <h2>🔐 Área do Administrador</h2>
-                <p>Entre com suas credenciais de organizador para gerenciar o torneio e o banco de dados.</p>
+                <h2>🔐 Acesso Restrito</h2>
+                <p>Identifique-se com suas credenciais de organizador.</p>
             </div>
             <div id="adminLoginStatus" class="status-message" style="display: none;"></div>
             <form id="adminLoginForm">
                 <div class="form-group">
                     <label for="adminUser">Usuário:</label>
-                    <input type="text" id="adminUser" required placeholder="admin" autocomplete="username">
+                    <input type="text" id="adminUser" required placeholder="Digite o usuário" autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="adminPassword">Senha:</label>
-                    <input type="password" id="adminPassword" required placeholder="••••••••" autocomplete="current-password">
+                    <input type="password" id="adminPassword" required placeholder="Digite a senha" autocomplete="current-password">
                 </div>
-                <button type="submit" class="btn-submit" style="margin-top: 16px;">Entrar como Administrador</button>
+                <button type="submit" class="btn-submit" style="margin-top: 16px;">Entrar</button>
             </form>
         </div>
     </div>
 
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 </body>
 </html>

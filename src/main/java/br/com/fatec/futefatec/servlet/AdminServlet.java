@@ -110,6 +110,9 @@ public class AdminServlet extends HttpServlet {
             dados.put("smtpConfigurado", br.com.fatec.futefatec.service.EmailService.isSmtpConfigurado());
             dados.put("smtpHost", br.com.fatec.futefatec.service.EmailService.getSmtpHost());
             dados.put("smtpUser", br.com.fatec.futefatec.service.EmailService.getSmtpUser());
+            dados.put("provedorEmail", br.com.fatec.futefatec.service.EmailService.getProvedorAtivo());
+            dados.put("webhookConfigurado", !br.com.fatec.futefatec.service.EmailService.getGmailWebhookUrl().isBlank());
+            dados.put("webhookUrl", br.com.fatec.futefatec.service.EmailService.mascararUrl(br.com.fatec.futefatec.service.EmailService.getGmailWebhookUrl()));
 
             out.print(objectMapper.writeValueAsString(dados));
         } else if (uri.endsWith("/testar-email")) {

@@ -31,7 +31,8 @@ import jakarta.servlet.http.HttpSession;
         "/api/admin/login",
         "/api/admin/logout",
         "/api/admin/status",
-        "/api/admin/toggle-chaveamento"
+        "/api/admin/toggle-chaveamento",
+        "/api/admin/testar-email"
 })
 public class AdminServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -106,8 +107,36 @@ public class AdminServlet extends HttpServlet {
             dados.put("status", "sucesso");
             dados.put("adminLogado", admin);
             dados.put("chaveamentoLiberado", liberado);
+            dados.put("smtpConfigurado", br.com.fatec.futefatec.service.EmailService.isSmtpConfigurado());
+            dados.put("smtpHost", br.com.fatec.futefatec.service.EmailService.getSmtpHost());
+            dados.put("smtpUser", br.com.fatec.futefatec.service.EmailService.getSmtpUser());
 
             out.print(objectMapper.writeValueAsString(dados));
+        } else if (uri.endsWith("/testar-email")) {
+            if (!isAdmin(req)) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"status\":\"erro\",\"mensagem\":\"Acesso negado: apenas o administrador pode testar o envio de e-mail!\"}");
+                return;
+            }
+            String destinatario = req.getParameter("para");
+            if (destinatario == null || destinatario.isBlank()) {
+                destinatario = br.com.fatec.futefatec.service.EmailService.getSmtpUser();
+            }
+            if (destinatario == null || destinatario.isBlank()) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"status\":\"erro\",\"mensagem\":\"Informe o parâmetro 'para' com o e-mail de destino (ex: /api/admin/testar-email?para=seuemail@gmail.com)\"}");
+                return;
+            }
+
+            br.com.fatec.futefatec.model.Time timeTeste = new br.com.fatec.futefatec.model.Time("Time Teste FUTFATEC", "Capitão Teste", destinatario.trim(), "sem_logo.png", 5);
+            timeTeste.adicionarJogador(new br.com.fatec.futefatec.model.Jogador("Jogador Teste 1", "Goleiro", true));
+            timeTeste.adicionarJogador(new br.com.fatec.futefatec.model.Jogador("Jogador Teste 2", "Pivô", true));
+            br.com.fatec.futefatec.service.EmailService.enviarConfirmacaoInscricao(timeTeste);
+
+            Map<String, Object> respTeste = new HashMap<>();
+            respTeste.put("status", "sucesso");
+            respTeste.put("mensagem", "Disparo de e-mail teste iniciado para: " + destinatario + ". Verifique sua caixa de entrada/spam e os logs do Render!");
+            out.print(objectMapper.writeValueAsString(respTeste));
         } else {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             out.print("{\"status\":\"erro\",\"mensagem\":\"Rota não encontrada\"}");

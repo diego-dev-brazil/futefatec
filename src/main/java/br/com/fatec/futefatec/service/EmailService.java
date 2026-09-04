@@ -37,18 +37,54 @@ import br.com.fatec.futefatec.model.Time;
  */
 public class EmailService {
 
-    private static final String SMTP_HOST = getEnvOrDefault("SMTP_HOST", "smtp.gmail.com");
-    private static final int SMTP_PORT = Integer.parseInt(getEnvOrDefault("SMTP_PORT", "587"));
-    private static final String SMTP_USER = getEnvOrDefault("SMTP_USER", "");
-    private static final String SMTP_PASSWORD = getEnvOrDefault("SMTP_PASSWORD", "");
-    private static final String SMTP_FROM = getEnvOrDefault("SMTP_FROM", SMTP_USER.isEmpty() ? "noreply@futfatec.com.br" : SMTP_USER);
+    public static String getSmtpHost() {
+        return getFirstEnvOrProperty("smtp.gmail.com", "SMTP_HOST", "MAIL_HOST", "EMAIL_HOST");
+    }
 
-    private static String getEnvOrDefault(String key, String def) {
-        String val = System.getenv(key);
-        if (val == null || val.isBlank()) {
-            val = System.getProperty(key);
+    public static int getSmtpPort() {
+        String p = getFirstEnvOrProperty("587", "SMTP_PORT", "MAIL_PORT", "EMAIL_PORT");
+        try {
+            return Integer.parseInt(p.trim());
+        } catch (Exception e) {
+            return 587;
         }
-        return (val != null && !val.isBlank()) ? val.trim() : def;
+    }
+
+    public static String getSmtpUser() {
+        return getFirstEnvOrProperty("", "SMTP_USER", "SMTP_USERNAME", "MAIL_USERNAME", "EMAIL_USER", "SMTP_EMAIL", "EMAIL");
+    }
+
+    public static String getSmtpPassword() {
+        String pass = getFirstEnvOrProperty("", "SMTP_PASSWORD", "SMTP_PASS", "MAIL_PASSWORD", "EMAIL_PASSWORD", "SMTP_SENHA", "SENHA_EMAIL");
+        // Remove espaços de senhas de aplicativo do Gmail (ex: "abcd efgh ijkl mnop" -> "abcdefghijklmnop")
+        return pass != null ? pass.replaceAll("\\s+", "") : "";
+    }
+
+    public static String getSmtpFrom() {
+        String from = getFirstEnvOrProperty("", "SMTP_FROM", "MAIL_FROM", "EMAIL_FROM");
+        if (from.isBlank()) {
+            String user = getSmtpUser();
+            return user.isBlank() ? "noreply@futfatec.com.br" : user;
+        }
+        return from;
+    }
+
+    public static boolean isSmtpConfigurado() {
+        return !getSmtpUser().isBlank() && !getSmtpPassword().isBlank();
+    }
+
+    private static String getFirstEnvOrProperty(String defaultValue, String... keys) {
+        for (String key : keys) {
+            String val = System.getenv(key);
+            if (val != null && !val.isBlank()) {
+                return val.trim();
+            }
+            val = System.getProperty(key);
+            if (val != null && !val.isBlank()) {
+                return val.trim();
+            }
+        }
+        return defaultValue;
     }
 
     /**
@@ -94,48 +130,76 @@ public class EmailService {
     }
 
     /**
-     * Dispara o e-mail via SMTP real ou simula o envio caso não haja credenciais.
+     * Dispara o e-mail via SMTP real ou alerta caso as credenciais não estejam presentes.
      */
     private static void dispararEmail(String destinatario, String assunto, String corpoHtml) {
-        if (SMTP_USER.isBlank() || SMTP_PASSWORD.isBlank()) {
-            // MODO SIMULAÇÃO (desenvolvimento / ambiente sem SMTP configurado)
-            System.out.println("================================================================================");
-            System.out.println(">> [EmailService] [SIMULAÇÃO DE ENVIO DE E-MAIL]");
-            System.out.println(">> Para: " + destinatario);
-            System.out.println(">> Assunto: " + assunto);
-            System.out.println(">> Status: Simulado com sucesso (configure SMTP_USER e SMTP_PASSWORD para envio real)");
-            System.out.println("================================================================================");
+        String host = getSmtpHost();
+        int port = getSmtpPort();
+        String user = getSmtpUser();
+        String pass = getSmtpPassword();
+        String from = getSmtpFrom();
+
+        if (user.isBlank() || pass.isBlank()) {
+            System.err.println("================================================================================");
+            System.err.println(">> [EmailService] ⚠️ ATENÇÃO: Credenciais SMTP não encontradas nas variáveis de ambiente!");
+            System.err.println(">> Verifique no Render se as variáveis abaixo foram cadastradas:");
+            System.err.println(">>   - SMTP_USER: seu e-mail (ex: seuemail@gmail.com)");
+            System.err.println(">>   - SMTP_PASSWORD: senha de aplicativo (16 dígitos)");
+            System.err.println(">>   - SMTP_HOST: smtp.gmail.com (opcional, padrão)");
+            System.err.println(">>   - SMTP_PORT: 587 (opcional, padrão)");
+            System.err.println(">> Destinatário do e-mail que aguarda envio: " + destinatario);
+            System.err.println(">> Assunto: " + assunto);
+            System.err.println("================================================================================");
             return;
         }
 
+        System.out.println(">> [EmailService] Disparando e-mail REAL para: " + destinatario);
+        System.out.println(">> [EmailService] Servidor: " + host + ":" + port + " | Conta: " + user);
+
         try {
-            enviarSmtp(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, destinatario, assunto, corpoHtml);
-            System.out.println(">> [EmailService] E-mail enviado com sucesso para: " + destinatario);
+            enviarSmtp(host, port, user, pass, from, destinatario, assunto, corpoHtml);
+            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso para: " + destinatario);
         } catch (Exception e) {
-            System.err.println(">> [EmailService] Falha ao enviar via SMTP (" + SMTP_HOST + ":" + SMTP_PORT + "): " + e.getMessage());
+            System.err.println(">> [EmailService] ❌ Falha ao enviar via SMTP (" + host + ":" + port + ") para " + destinatario + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
-     * Cliente SMTP direto em puro Java com suporte a STARTTLS e AUTH LOGIN.
+     * Cliente SMTP direto em puro Java com suporte a STARTTLS (587), SSL direto (465),
+     * autenticação AUTH LOGIN e AUTH PLAIN.
      */
     private static void enviarSmtp(String host, int port, String user, String pass, String from, String to, String subject, String htmlBody) throws Exception {
-        Socket socket = new Socket(host, port);
-        socket.setSoTimeout(15000);
+        Socket socket;
+        if (port == 465) {
+            SSLSocketFactory sslFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            SSLSocket sslSocket = (SSLSocket) sslFactory.createSocket(host, port);
+            sslSocket.startHandshake();
+            socket = sslSocket;
+        } else {
+            socket = new Socket();
+            socket.connect(new java.net.InetSocketAddress(host, port), 15000);
+        }
+        socket.setSoTimeout(20000);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
 
-        lerResposta(reader); // 220
+        String banner = lerResposta(reader); // 220
+        if (!banner.startsWith("220")) {
+            throw new RuntimeException("Banner inicial SMTP inválido: " + banner);
+        }
 
         enviarComando(writer, "EHLO localhost");
         String ehloResp = lerResposta(reader);
 
-        // Se for porta 587 ou se o servidor suportar STARTTLS
-        if (port == 587 || ehloResp.contains("STARTTLS")) {
+        // Se for porta 587 ou se o servidor suportar STARTTLS (e não estiver já em SSL direto 465)
+        if (port != 465 && (port == 587 || ehloResp.contains("STARTTLS"))) {
             enviarComando(writer, "STARTTLS");
-            lerResposta(reader); // 220 Ready to start TLS
+            String startTlsResp = lerResposta(reader); // 220 Ready to start TLS
+            if (!startTlsResp.startsWith("220")) {
+                throw new RuntimeException("Falha ao negociar STARTTLS: " + startTlsResp);
+            }
 
             SSLSocketFactory sslFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
             SSLSocket sslSocket = (SSLSocket) sslFactory.createSocket(socket, host, port, true);
@@ -145,38 +209,59 @@ public class EmailService {
             writer = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream(), StandardCharsets.UTF_8));
 
             enviarComando(writer, "EHLO localhost");
-            lerResposta(reader);
+            ehloResp = lerResposta(reader);
         }
 
-        // Autenticação AUTH LOGIN
+        // Autenticação AUTH LOGIN com fallback para AUTH PLAIN
         enviarComando(writer, "AUTH LOGIN");
-        lerResposta(reader); // 334
+        String authPrompt = lerResposta(reader); // 334
+        if (authPrompt.startsWith("334")) {
+            enviarComando(writer, Base64.getEncoder().encodeToString(user.getBytes(StandardCharsets.UTF_8)));
+            lerResposta(reader); // 334
 
-        enviarComando(writer, Base64.getEncoder().encodeToString(user.getBytes(StandardCharsets.UTF_8)));
-        lerResposta(reader); // 334
-
-        enviarComando(writer, Base64.getEncoder().encodeToString(pass.getBytes(StandardCharsets.UTF_8)));
-        String authResp = lerResposta(reader); // 235 Authentication succeeded
-        if (!authResp.startsWith("235")) {
-            throw new RuntimeException("Falha na autenticação SMTP: " + authResp);
+            enviarComando(writer, Base64.getEncoder().encodeToString(pass.getBytes(StandardCharsets.UTF_8)));
+            String authResp = lerResposta(reader); // 235 Authentication succeeded
+            if (!authResp.startsWith("235")) {
+                throw new RuntimeException("Falha na autenticação SMTP: " + authResp);
+            }
+        } else if (ehloResp.contains("AUTH PLAIN") || ehloResp.contains("PLAIN")) {
+            String plainToken = "\0" + user + "\0" + pass;
+            enviarComando(writer, "AUTH PLAIN " + Base64.getEncoder().encodeToString(plainToken.getBytes(StandardCharsets.UTF_8)));
+            String plainResp = lerResposta(reader);
+            if (!plainResp.startsWith("235")) {
+                throw new RuntimeException("Falha na autenticação SMTP (AUTH PLAIN): " + plainResp);
+            }
+        } else {
+            throw new RuntimeException("Servidor SMTP não aceitou autenticação: " + authPrompt);
         }
 
-        enviarComando(writer, "MAIL FROM:<" + from + ">");
-        lerResposta(reader); // 250
+        // Provedores como Gmail exigem que o MAIL FROM seja o endereço da conta autenticada
+        String envelopeFrom = user.contains("@") ? user : from;
+        enviarComando(writer, "MAIL FROM:<" + envelopeFrom + ">");
+        String mailFromResp = lerResposta(reader); // 250
+        if (!mailFromResp.startsWith("250")) {
+            throw new RuntimeException("Erro no comando MAIL FROM: " + mailFromResp);
+        }
 
-        enviarComando(writer, "RCPT TO:<" + to + ">");
-        lerResposta(reader); // 250
+        enviarComando(writer, "RCPT TO:<" + to.trim() + ">");
+        String rcptResp = lerResposta(reader); // 250
+        if (!rcptResp.startsWith("250")) {
+            throw new RuntimeException("Erro no comando RCPT TO para " + to + ": " + rcptResp);
+        }
 
         enviarComando(writer, "DATA");
-        lerResposta(reader); // 354
+        String dataResp = lerResposta(reader); // 354
+        if (!dataResp.startsWith("354")) {
+            throw new RuntimeException("Erro no comando DATA: " + dataResp);
+        }
 
         // Cabeçalhos MIME
         String subjectEncoded = "=?UTF-8?B?" + Base64.getEncoder().encodeToString(subject.getBytes(StandardCharsets.UTF_8)) + "?=";
         String bodyBase64 = Base64.getMimeEncoder(76, new byte[]{'\r', '\n'}).encodeToString(htmlBody.getBytes(StandardCharsets.UTF_8));
 
         StringBuilder emailMsg = new StringBuilder();
-        emailMsg.append("From: FUTFATEC <").append(from).append(">\r\n");
-        emailMsg.append("To: <").append(to).append(">\r\n");
+        emailMsg.append("From: FUTFATEC <").append(envelopeFrom).append(">\r\n");
+        emailMsg.append("To: <").append(to.trim()).append(">\r\n");
         emailMsg.append("Subject: ").append(subjectEncoded).append("\r\n");
         emailMsg.append("MIME-Version: 1.0\r\n");
         emailMsg.append("Content-Type: text/html; charset=UTF-8\r\n");
@@ -187,9 +272,16 @@ public class EmailService {
 
         writer.write(emailMsg.toString());
         writer.flush();
-        lerResposta(reader); // 250 OK
+        String finalResp = lerResposta(reader); // 250 OK
+        if (!finalResp.startsWith("250")) {
+            throw new RuntimeException("Servidor SMTP não confirmou o envio: " + finalResp);
+        }
 
-        enviarComando(writer, "QUIT");
+        try {
+            enviarComando(writer, "QUIT");
+            lerResposta(reader);
+        } catch (Exception ignored) {}
+
         try {
             socket.close();
         } catch (Exception ignored) {}

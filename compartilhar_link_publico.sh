@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# FUTEFATEC - GERADOR DE LINK PÚBLICO INSTANTÂNEO (100% GRÁTIS)
+# FUTFATEC - GERADOR DE LINK PÚBLICO INSTANTÂNEO (100% GRÁTIS)
 # ==============================================================================
-# Este script cria um link público seguro com HTTPS para o seu FuteFatec
+# Este script cria um link público seguro com HTTPS para o seu FutFatec
 # sem precisar cadastrar cartão ou configurar servidores complexos.
 # ==============================================================================
 
 PORTA=8085
 
 echo "==============================================================="
-echo "   GERANDO LINK PÚBLICO PARA O FUTEFATEC (PORTA $PORTA)       "
+echo "   GERANDO LINK PÚBLICO PARA O FUTFATEC (PORTA $PORTA)       "
 echo "==============================================================="
 
 # 1. Verifica se o cloudflared já está presente

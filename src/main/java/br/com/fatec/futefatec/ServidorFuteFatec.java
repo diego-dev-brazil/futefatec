@@ -105,8 +105,19 @@ public class ServidorFuteFatec {
         Tomcat.addServlet(ctx, "AdminServlet", adminServlet);
         ctx.addServletMappingDecoded("/api/admin/*", "AdminServlet");
 
+        // Registra o filtro NoCacheFilter para que navegadores e o Render nunca sirvam HTML/CSS/JS obsoletos
+        org.apache.tomcat.util.descriptor.web.FilterDef filterDef = new org.apache.tomcat.util.descriptor.web.FilterDef();
+        filterDef.setFilterName("NoCacheFilter");
+        filterDef.setFilterClass(br.com.fatec.futefatec.servlet.NoCacheFilter.class.getName());
+        ctx.addFilterDef(filterDef);
+
+        org.apache.tomcat.util.descriptor.web.FilterMap filterMap = new org.apache.tomcat.util.descriptor.web.FilterMap();
+        filterMap.setFilterName("NoCacheFilter");
+        filterMap.addURLPattern("/*");
+        ctx.addFilterMap(filterMap);
+
         System.out.println("===============================================================");
-        System.out.println("        FUTEFATEC - SERVIDOR INICIADO COM SUCESSO!             ");
+        System.out.println("        FUTFATEC - SERVIDOR INICIADO COM SUCESSO!             ");
         System.out.println("===============================================================");
         System.out.println(">> Frontend (Inscrição e Chaveamento): http://localhost:" + porta + "/index.html");
         System.out.println(">> Endpoint Inscrição:                 http://localhost:" + porta + "/inscrever");

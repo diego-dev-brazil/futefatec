@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Script de Execução Rápida do FuteFatec (Tomcat Embutido + Jakarta Servlets)
+# Script de Execução Rápida do FutFatec (Tomcat Embutido + Jakarta Servlets)
 # ==============================================================================
 
 set -e
@@ -9,7 +9,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
 echo "================================================================"
-echo "    [FUTEFATEC] Compilando e Inicializando Servidor Java...     "
+echo "    [FUTFATEC] Compilando e Inicializando Servidor Java...     "
 echo "================================================================"
 
 mkdir -p target/classes uploads data

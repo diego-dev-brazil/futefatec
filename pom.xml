@@ -9,8 +9,8 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>FuteFatec</name>
-    <description>Sistema de Inscrição de Times do Torneio FuteFatec - Backend Jakarta Servlets</description>
+    <name>FutFatec</name>
+    <description>Sistema de Inscrição de Times do Torneio FutFatec - Backend Jakarta Servlets</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

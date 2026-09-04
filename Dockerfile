@@ -1,5 +1,5 @@
 # ==============================================================================
-# FUTEFATEC - DOCKERFILE MULTI-STAGE
+# FUTFATEC - DOCKERFILE MULTI-STAGE
 # ==============================================================================
 
 # Estágio 1: Build da Aplicação com Maven e Java 17
@@ -9,8 +9,8 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-# Compila o projeto e empacota
-RUN mvn clean package -DskipTests
+# Compila o projeto limpo do zero e empacota
+RUN mvn clean package -DskipTests --no-transfer-progress
 
 # ------------------------------------------------------------------------------
 # Estágio 2: Imagem Final de Execução (Leve e Segura)
@@ -24,9 +24,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 # Diretórios persistentes para banco relacional H2 e uploads de logos
 RUN mkdir -p /app/data /app/uploads /app/target/classes
 
-# Copia as classes compiladas e recursos estáticos
+# Copia as classes compiladas e dependências do Maven
 COPY --from=builder /build/target/classes /app/target/classes
 COPY --from=builder /root/.m2/repository /root/.m2/repository
+
+# Invalidação explícita de cache: garante que o Render sempre copie a versão mais recente dos arquivos estáticos
+ARG CACHEBUST=20260904
 COPY index.html /app/index.html
 COPY style.css /app/style.css
 COPY script.js /app/script.js

@@ -190,7 +190,7 @@ public class InscricaoServlet extends HttpServlet {
 
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resposta.put("status", "sucesso");
-            resposta.put("mensagem", "Inscrição realizada com sucesso no FuteFatec!");
+            resposta.put("mensagem", "Inscrição realizada com sucesso no FutFatec!");
             resposta.put("time", time);
             resposta.put("totalTimesInscritos", totalTimes);
 

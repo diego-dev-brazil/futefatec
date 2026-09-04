@@ -4,7 +4,7 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-    <display-name>FuteFatec</display-name>
+    <display-name>FutFatec</display-name>
 
     <!-- Mapeamento clássico do Servlet (também configurado via @WebServlet no código) -->
     <servlet>

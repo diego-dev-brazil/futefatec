@@ -1,6 +1,6 @@
-# 🚀 Guia de Hospedagem e Publicação do FuteFatec
+# 🚀 Guia de Hospedagem e Publicação do FutFatec
 
-Este guia explica como disponibilizar o **FuteFatec** para acesso público na internet com segurança, controle de acesso e persistência dos dados cadastrados.
+Este guia explica como disponibilizar o **FutFatec** para acesso público na internet com segurança, controle de acesso e persistência dos dados cadastrados.
 
 ---
 

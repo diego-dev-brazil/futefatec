@@ -37,6 +37,30 @@ import br.com.fatec.futefatec.model.Time;
  */
 public class EmailService {
 
+    private static final java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+            .version(java.net.http.HttpClient.Version.HTTP_1_1)
+            .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+            .connectTimeout(java.time.Duration.ofSeconds(15))
+            .build();
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    public static String getGmailWebhookUrl() {
+        return getFirstEnvOrProperty("", "GMAIL_WEBHOOK_URL", "EMAIL_WEBHOOK_URL", "WEBHOOK_EMAIL_URL", "GOOGLE_SCRIPT_URL");
+    }
+
+    public static String getBrevoApiKey() {
+        return getFirstEnvOrProperty("", "BREVO_API_KEY", "SENDINBLUE_API_KEY");
+    }
+
+    public static String getResendApiKey() {
+        return getFirstEnvOrProperty("", "RESEND_API_KEY", "RESEND_KEY");
+    }
+
+    public static String getSendGridApiKey() {
+        return getFirstEnvOrProperty("", "SENDGRID_API_KEY", "SENDGRID_KEY");
+    }
+
     public static String getSmtpHost() {
         return getFirstEnvOrProperty("smtp.gmail.com", "SMTP_HOST", "MAIL_HOST", "EMAIL_HOST");
     }
@@ -70,7 +94,22 @@ public class EmailService {
     }
 
     public static boolean isSmtpConfigurado() {
-        return !getSmtpUser().isBlank() && !getSmtpPassword().isBlank();
+        return !getGmailWebhookUrl().isBlank()
+                || !getBrevoApiKey().isBlank()
+                || !getResendApiKey().isBlank()
+                || !getSendGridApiKey().isBlank()
+                || (!getSmtpUser().isBlank() && !getSmtpPassword().isBlank());
+    }
+
+    public static String getProvedorAtivo() {
+        if (!getGmailWebhookUrl().isBlank()) return "Google Apps Script Webhook (Porta 443 HTTPS - futfatec@gmail.com)";
+        if (!getBrevoApiKey().isBlank()) return "Brevo API (Porta 443 HTTPS)";
+        if (!getResendApiKey().isBlank()) return "Resend API (Porta 443 HTTPS)";
+        if (!getSendGridApiKey().isBlank()) return "SendGrid API (Porta 443 HTTPS)";
+        if (!getSmtpUser().isBlank() && !getSmtpPassword().isBlank()) {
+            return "SMTP Direto (" + getSmtpHost() + ":" + getSmtpPort() + ")";
+        }
+        return "Nenhum (Modo Simulação/Aviso)";
     }
 
     private static String getFirstEnvOrProperty(String defaultValue, String... keys) {
@@ -130,38 +169,188 @@ public class EmailService {
     }
 
     /**
-     * Dispara o e-mail via SMTP real ou alerta caso as credenciais não estejam presentes.
+     * Dispara o e-mail via Webhook Google, Brevo API, Resend API ou SMTP.
      */
     private static void dispararEmail(String destinatario, String assunto, String corpoHtml) {
+        String webhookUrl = getGmailWebhookUrl();
+        String brevoKey = getBrevoApiKey();
+        String resendKey = getResendApiKey();
+        String sendgridKey = getSendGridApiKey();
+
         String host = getSmtpHost();
         int port = getSmtpPort();
         String user = getSmtpUser();
         String pass = getSmtpPassword();
         String from = getSmtpFrom();
 
-        if (user.isBlank() || pass.isBlank()) {
-            System.err.println("================================================================================");
-            System.err.println(">> [EmailService] ⚠️ ATENÇÃO: Credenciais SMTP não encontradas nas variáveis de ambiente!");
-            System.err.println(">> Verifique no Render se as variáveis abaixo foram cadastradas:");
-            System.err.println(">>   - SMTP_USER: seu e-mail (ex: seuemail@gmail.com)");
-            System.err.println(">>   - SMTP_PASSWORD: senha de aplicativo (16 dígitos)");
-            System.err.println(">>   - SMTP_HOST: smtp.gmail.com (opcional, padrão)");
-            System.err.println(">>   - SMTP_PORT: 587 (opcional, padrão)");
-            System.err.println(">> Destinatário do e-mail que aguarda envio: " + destinatario);
-            System.err.println(">> Assunto: " + assunto);
-            System.err.println("================================================================================");
-            return;
-        }
-
-        System.out.println(">> [EmailService] Disparando e-mail REAL para: " + destinatario);
-        System.out.println(">> [EmailService] Servidor: " + host + ":" + port + " | Conta: " + user);
+        System.out.println(">> [EmailService] Disparando e-mail para: " + destinatario);
+        System.out.println(">> [EmailService] Provedor selecionado: " + getProvedorAtivo());
 
         try {
-            enviarSmtp(host, port, user, pass, from, destinatario, assunto, corpoHtml);
-            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso para: " + destinatario);
+            if (!webhookUrl.isBlank()) {
+                // 1. Google Apps Script Webhook (Porta 443 HTTPS - livre no Render)
+                enviarViaWebhook(webhookUrl, destinatario, assunto, corpoHtml);
+            } else if (!brevoKey.isBlank()) {
+                // 2. Brevo API (Porta 443 HTTPS - livre no Render)
+                enviarViaBrevo(brevoKey, from, destinatario, assunto, corpoHtml);
+            } else if (!resendKey.isBlank()) {
+                // 3. Resend API (Porta 443 HTTPS - livre no Render)
+                enviarViaResend(resendKey, from, destinatario, assunto, corpoHtml);
+            } else if (!sendgridKey.isBlank()) {
+                // 4. SendGrid API (Porta 443 HTTPS - livre no Render)
+                enviarViaSendGrid(sendgridKey, from, destinatario, assunto, corpoHtml);
+            } else if (!user.isBlank() && !pass.isBlank()) {
+                // 5. SMTP Direto
+                enviarSmtp(host, port, user, pass, from, destinatario, assunto, corpoHtml);
+                System.out.println(">> [EmailService] ✅ E-mail entregue com sucesso via SMTP para: " + destinatario);
+            } else {
+                System.err.println("================================================================================");
+                System.err.println(">> [EmailService] ⚠️ NENHUMA CONFIGURAÇÃO DE E-MAIL DETECTADA!");
+                System.err.println(">> Destinatário: " + destinatario);
+                System.err.println(">> Assunto: " + assunto);
+                System.err.println("================================================================================");
+            }
+        } catch (java.net.SocketTimeoutException e) {
+            System.err.println("================================================================================");
+            System.err.println(">> [EmailService] ❌ ERRO DE CONEXÃO SMTP: Connect timed out na porta " + port);
+            System.err.println(">> ⚠️ MOTIVO: O Render BLOQUEIA conexões de saída nas portas SMTP 25, 465 e 587 no plano gratuito!");
+            System.err.println(">> 💡 SOLUÇÃO RÁPIDA (Porta 443 HTTPS aberta no Render):");
+            System.err.println(">>   Opção 1 (Direto pelo seu futfatec@gmail.com): configure a variável GMAIL_WEBHOOK_URL");
+            System.err.println(">>   Opção 2 (300 e-mails grátis/dia): crie conta no Brevo e configure a variável BREVO_API_KEY");
+            System.err.println(">>   Opção 3 (3.000 e-mails grátis/mês): configure a variável RESEND_API_KEY");
+            System.err.println("================================================================================");
         } catch (Exception e) {
-            System.err.println(">> [EmailService] ❌ Falha ao enviar via SMTP (" + host + ":" + port + ") para " + destinatario + ": " + e.getMessage());
+            System.err.println(">> [EmailService] ❌ Falha ao enviar e-mail para " + destinatario + ": " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Envia via Google Apps Script Webhook (executa como futfatec@gmail.com sobre HTTPS porta 443).
+     */
+    private static void enviarViaWebhook(String webhookUrl, String to, String subject, String htmlBody) throws Exception {
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("to", to.trim());
+        payload.put("subject", subject);
+        payload.put("html", htmlBody);
+        payload.put("htmlBody", htmlBody);
+
+        String json = objectMapper.writeValueAsString(payload);
+
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create(webhookUrl))
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(25))
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 400) {
+            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso via Google Webhook para: " + to);
+        } else {
+            throw new RuntimeException("Google Webhook retornou HTTP " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    /**
+     * Envia via Brevo API v3 (porta 443 HTTPS).
+     */
+    private static void enviarViaBrevo(String apiKey, String from, String to, String subject, String htmlBody) throws Exception {
+        String senderEmail = getSmtpUser();
+        if (senderEmail.isBlank()) senderEmail = "futfatec@gmail.com";
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        java.util.Map<String, String> sender = new java.util.HashMap<>();
+        sender.put("name", "FUTFATEC 2026");
+        sender.put("email", senderEmail);
+        payload.put("sender", sender);
+
+        java.util.List<java.util.Map<String, String>> toList = new java.util.ArrayList<>();
+        java.util.Map<String, String> recipient = new java.util.HashMap<>();
+        recipient.put("email", to.trim());
+        toList.add(recipient);
+        payload.put("to", toList);
+
+        payload.put("subject", subject);
+        payload.put("htmlContent", htmlBody);
+
+        String json = objectMapper.writeValueAsString(payload);
+
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create("https://api.brevo.com/v3/smtp/email"))
+                .header("api-key", apiKey.trim())
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .timeout(java.time.Duration.ofSeconds(20))
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso via Brevo API para: " + to);
+        } else {
+            throw new RuntimeException("Brevo API retornou HTTP " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    /**
+     * Envia via Resend API (porta 443 HTTPS).
+     */
+    private static void enviarViaResend(String apiKey, String from, String to, String subject, String htmlBody) throws Exception {
+        String fromHeader = getFirstEnvOrProperty("FUTFATEC <onboarding@resend.dev>", "RESEND_FROM");
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("from", fromHeader);
+        payload.put("to", java.util.List.of(to.trim()));
+        payload.put("subject", subject);
+        payload.put("html", htmlBody);
+
+        String json = objectMapper.writeValueAsString(payload);
+
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create("https://api.resend.com/emails"))
+                .header("Authorization", "Bearer " + apiKey.trim())
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(20))
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso via Resend API para: " + to);
+        } else {
+            throw new RuntimeException("Resend API retornou HTTP " + response.statusCode() + ": " + response.body());
+        }
+    }
+
+    /**
+     * Envia via SendGrid API (porta 443 HTTPS).
+     */
+    private static void enviarViaSendGrid(String apiKey, String from, String to, String subject, String htmlBody) throws Exception {
+        String senderEmail = getSmtpUser();
+        if (senderEmail.isBlank()) senderEmail = "futfatec@gmail.com";
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("personalizations", java.util.List.of(java.util.Map.of("to", java.util.List.of(java.util.Map.of("email", to.trim())))));
+        payload.put("from", java.util.Map.of("email", senderEmail, "name", "FUTFATEC 2026"));
+        payload.put("subject", subject);
+        payload.put("content", java.util.List.of(java.util.Map.of("type", "text/html", "value", htmlBody)));
+
+        String json = objectMapper.writeValueAsString(payload);
+
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create("https://api.sendgrid.com/v3/mail/send"))
+                .header("Authorization", "Bearer " + apiKey.trim())
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(20))
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        java.net.http.HttpResponse<String> response = httpClient.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            System.out.println(">> [EmailService] ✅ E-mail REAL entregue com sucesso via SendGrid API para: " + to);
+        } else {
+            throw new RuntimeException("SendGrid API retornou HTTP " + response.statusCode() + ": " + response.body());
         }
     }
 
